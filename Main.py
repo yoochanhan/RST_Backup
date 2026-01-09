@@ -1,8 +1,8 @@
 #Copyright (c) 2025 St. Mother Teresa HS All rights reserved.
 
-# Created by: Mr. M
-# Created on: Sep 2025
-# This program displays, "Hello, World!"
+# Created by: Yoochan Han
+# Created on: Jan 2026
+# This program is Fighting simulator run by AI
 
 import os
 import openai
