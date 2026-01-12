@@ -1,8 +1,8 @@
 #Copyright (c) 2025 St. Mother Teresa HS All rights reserved.
 
-# Created by: Mr. M
-# Created on: Sep 2025
-# This program displays, "Hello, World!"
+# Created by: Yoochan Han
+# Created on: Jan 2026
+# This program displays, "AI fighting simulation"
 
 import os
 import openai
@@ -31,17 +31,20 @@ class entity():
             f"{self.name}, {self.role}, {self.hp}", 
             f"{self.atk}, {self.mp}, {self.df}, {self.description}"
             )
-    def status(self):
-        status = (
-            "you are" + self.name + "," + self.role + " has " + self.hp
-            + "hp, " + self.mp + "mp, ")
-    # introducing 
+    def status_now(self):
+        stats = ""
+        stats = (
+            "you are" + str(self.name) + "," + str(self.role) + " has " + str(self.hp)
+            + "hp, " + str(self.mp) + "mp, " + str(self.df) + "df.")
+        return str(stats)
+    # introducing
     def intro(self):
         pass
     def use_skill(self):
+        stats = status_now()
         response = client.responses.create(
         model="gpt-5-mini",
-        input="intr"
+        input=(stats + "")
     )
     def attack(self):
         pass
@@ -50,7 +53,7 @@ class entity():
 def generate_character():
     response = client.responses.create(
         model="gpt-5-nano",
-        input="create a any character in a game and"\
+        input="create a any uselese character in a game and"\
                 "write character's name, role, hp(100-2000), atk(30-230),"\
                 "mp(10-400), df(5-100), short description."\
                 "your response should contain only values and"\
@@ -70,3 +73,8 @@ entity1 = entity(name1, role1, int(hp1), int(atk1), int(mp1), int(df1), dscpt1)
 name2, role2, hp2, atk2, mp2, df2, dscpt2 = generate_character().split(",")
 entity2 = entity(name2, role2, int(hp2), int(atk2), int(mp2), int(df2), dscpt2)
 # entity2.intro_dev()
+
+# Simulate start
+while 0:
+
+    entity1.use_skill()
