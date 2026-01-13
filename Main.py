@@ -11,7 +11,8 @@ import openai
 # Assumes OPENAI_API_KEY is set as an environment variable
 from openai import OpenAI
 client = OpenAI()
-battle_log=[]
+battle_log=["Battle just begun! fight!!"]
+turn = 0
 class equiment():
     pass
 class entity():
@@ -21,10 +22,13 @@ class entity():
         self.name = get_name
         self.role = get_role
         self.hp = get_hp
+        self.max_hp = get_hp
         self.atk = get_atk
         self.mp = get_mp
+        self.max_mp = get_mp
         self.df = get_df
         self.description = get_dscpt
+    
     # introducing for developing
     def intro_dev(self):
         print(
@@ -34,25 +38,36 @@ class entity():
     def status_now(self):
         stats = ""
         stats = (
-            "you are" + str(self.name) + "," + str(self.role) + " has " + str(self.hp)
-            + "hp, " + str(self.mp) + "mp, " + str(self.df) + "df.")
+            str(self.name) + "," + str(self.role) + " has " 
+            + str(self.hp) + "/" + str(self.max_hp)
+            + "hp, " + str(self.mp) + "/" + str(self.max_mp) + "mp, " 
+            + str(self.df) + "df.")
         return str(stats)
     # introducing
     def intro(self):
         pass
-    def use_skill(self):
-        stats = status_now()
+    def use_skill(self, enemy_stats):
+        opp_stats = enemy_stats
+        stats = self.status_now()
+        # Not completed yet
         response = client.responses.create(
-        model="gpt-5-mini",
-        input=(stats + "")
-    )
+            model="gpt-5-mini",
+            input=("you r" + stats + "and Your in situation:" + battle_log[turn]
+            + "and enemy stat is " + opp_stats + "you can make and use a skill "
+            + "and it might use mp or not, your choice. The answer format is"
+            + "Skill name, damage, self_healing, usage_mp, effect description"
+            + "and current situation")
+        )
+        print(response.output_text.strip())
+        battle_log.append()
+        return response.output_text.strip()
     def attack(self):
         pass
 
 
 def generate_character():
     response = client.responses.create(
-        model="gpt-5-nano",
+        model="gpt-5-mini",
         input="create a any uselese character in a game and"\
                 "write character's name, role, hp(100-2000), atk(30-230),"\
                 "mp(10-400), df(5-100), short description."\
@@ -64,6 +79,9 @@ def generate_character():
     # response2str = str(response)
     print(type(response.output_text.strip()))
     return response.output_text.strip()
+
+
+#game start
 
 generate_character()
 name1, role1, hp1, atk1, mp1, df1, dscpt1 = generate_character().split(",")
@@ -77,4 +95,6 @@ entity2 = entity(name2, role2, int(hp2), int(atk2), int(mp2), int(df2), dscpt2)
 # Simulate start
 while 0:
 
-    entity1.use_skill()
+    entity1.use_skill(entity2.status_now)
+    entity2.use_skill(entity1.status_now)
+    break
