@@ -28,6 +28,20 @@ class entity():
         self.max_mp = get_mp
         self.df = get_df
         self.description = get_dscpt
+
+    def change_stats_hp(
+        self, get_hp
+        ):
+        self.hp = get_hp
+    # def change_stats_hp(
+    #     self, get_hp
+    #     ):
+        # self.hp = get_hp
+    def change_stats_mp(
+        self, get_mp
+        ):
+        self.mp = get_mp
+
     
     # introducing for developing
     def intro_dev(self):
@@ -48,18 +62,21 @@ class entity():
         pass
     def use_skill(self, enemy_stats):
         opp_stats = enemy_stats
-        stats = self.status_now()
+        stats = str(self.status_now())
         # Not completed yet
         response = client.responses.create(
             model="gpt-5-mini",
-            input=("you r" + stats + "and Your in situation:" + battle_log[turn]
+            input=("you are" + str(stats) + "and Your in situation:" + battle_log[turn]
             + "and enemy stat is " + opp_stats + "you can make and use a skill "
             + "and it might use mp or not, your choice. The answer format is"
-            + "Skill name, damage, self_healing, usage_mp, effect description"
-            + "and current situation")
+            + "Name of Skill, damage(0, 200), self_healing(0, 100),"
+            + "usage_mp(0, 100), effect&description(very shortly and it can't )"
+            + "change enemy's stats like df and mp"
+            + "and current situation. Skill don't have to every effects, "
+            + "It could be only attack or heal what ever you want in boundary")
         )
-        print(response.output_text.strip())
-        battle_log.append()
+        print(response)
+        battle_log.append(response.output_text.strip())
         return response.output_text.strip()
     def attack(self):
         pass
@@ -75,9 +92,10 @@ def generate_character():
                 "each sections should"\
                 "divided by ','"
     )
-    print(type(response))
     # response2str = str(response)
     print(type(response.output_text.strip()))
+    print("AI response(character)")
+    print(response.output_text.strip())
     return response.output_text.strip()
 
 
@@ -93,8 +111,12 @@ entity2 = entity(name2, role2, int(hp2), int(atk2), int(mp2), int(df2), dscpt2)
 # entity2.intro_dev()
 
 # Simulate start
-while 0:
-
-    entity1.use_skill(entity2.status_now)
-    entity2.use_skill(entity1.status_now)
+while 1:
+    # TODO hungry <-- doesn't have meaning, plz change b4 summit to teacher
+    hungry1 = entity1.use_skill(entity2.status_now())
+    hungry2 = entity2.use_skill(entity1.status_now())
+    # "Name of Skill, damage, self_healing, usage_mp, effect description
+    hp1, mp1, dscpt1 = hungry1.split(",")
+    print("battle log")
+    print(battle_log)
     break
