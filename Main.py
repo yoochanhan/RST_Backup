@@ -13,8 +13,6 @@ from openai import OpenAI
 client = OpenAI()
 battle_log=["Battle just begun! fight!!"]
 turn = 0
-class equiment():
-    pass
 class entity():
     def __init__(
         self, get_name, get_role,get_hp, get_atk, get_mp, get_df, get_dscpt
@@ -42,7 +40,6 @@ class entity():
         ):
         self.mp = get_mp
 
-    
     # introducing for developing
     def intro_dev(self):
         print(
@@ -69,34 +66,37 @@ class entity():
             input=("you are" + str(stats) + "and Your in situation:" + battle_log[turn]
             + "and enemy stat is " + opp_stats + "you can make and use a skill "
             + "and it might use mp or not, your choice. The answer format is"
-            + "Name of Skill, damage(0, 200), self_healing(0, 100),"
+            + "Name of Skill, damage(-200, 200), self_healing(-150, 100),"
             + "usage_mp(0, 100), effect&description(very shortly and it can't )"
             + "change enemy's stats like df and mp"
-            + "and current situation. Skill don't have to every effects, "
-            + "It could be only attack or heal what ever you want in boundary")
+            + "and current situation. Skill don't have to contain every effects, "
+            + "It could be only attack or heal what ever you want in boundary"
+            + "also it could be very dumb like you can heal enemy to make "
+            + "damage as negative number and self hurt to make self_healing"
+            + "as negative number")
         )
         print(response)
         battle_log.append(response.output_text.strip())
         return response.output_text.strip()
-    def attack(self):
-        pass
+    def effect_skill(self, skill_name, eft_dmg, dscpt):
+        
 
 
-def generate_character():
-    response = client.responses.create(
-        model="gpt-5-mini",
-        input="create a any uselese character in a game and"\
-                "write character's name, role, hp(100-2000), atk(30-230),"\
-                "mp(10-400), df(5-100), short description."\
-                "your response should contain only values and"\
-                "each sections should"\
-                "divided by ','"
-    )
-    # response2str = str(response)
-    print(type(response.output_text.strip()))
-    print("AI response(character)")
-    print(response.output_text.strip())
-    return response.output_text.strip()
+    def generate_character():
+        response = client.responses.create(
+            model="gpt-5-mini",
+            input="create a any uselese character in a game and"\
+                    "write character's name, role, hp(100-2000), atk(30-230),"\
+                    "mp(10-400), df(5-100), short description."\
+                    "your response should contain only values and"\
+                    "each sections should"\
+                    "divided by ','"
+        )
+        # response2str = str(response)
+        print(type(response.output_text.strip()))
+        print("AI response(character)")
+        print(response.output_text.strip())
+        return response.output_text.strip()
 
 
 #game start
@@ -113,10 +113,12 @@ entity2 = entity(name2, role2, int(hp2), int(atk2), int(mp2), int(df2), dscpt2)
 # Simulate start
 while 1:
     # TODO hungry <-- doesn't have meaning, plz change b4 summit to teacher
-    hungry1 = entity1.use_skill(entity2.status_now())
-    hungry2 = entity2.use_skill(entity1.status_now())
+    skill_status1 = entity1.use_skill(entity2.status_now())
+    skill_name1, eft_dmg1, eft_mp1, dscpt1 = skill_status1.split(",")
+
+    skill_status2 = entity2.use_skill(entity1.status_now())
     # "Name of Skill, damage, self_healing, usage_mp, effect description
-    hp1, mp1, dscpt1 = hungry1.split(",")
+    skill_name1, eft_dmg1, eft_mp1, dscpt1 = skill_status1.split(",")
     print("battle log")
     print(battle_log)
     break
