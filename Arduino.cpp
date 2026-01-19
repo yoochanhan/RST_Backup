@@ -16,8 +16,9 @@ const int trigPin1 = 3;
 const int echoPin1 = 2; 
 const int trigPin2 = 13;  
 const int echoPin2 = 12; 
+const int trackSwitchPin = 6;
 float duration, distance;
-const int maxfilyDistance = 350;
+const int maxfilyDistance = 50;
 
 void setup()
 {
@@ -29,22 +30,23 @@ void setup()
     pinMode(trigPin2, OUTPUT);
   	pinMode(echoPin1, INPUT); 
 	pinMode(echoPin2, INPUT);  
+    pinMode(trackSwitchPin, INPUT);
 	Serial.begin(9600);  
 }
 float sonarSearching1() {
-  digitalWrite(trigPin1, LOW);
-  delayMicroseconds(2);
-  digitalWrite(trigPin1, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin1, LOW);
+    digitalWrite(trigPin1, LOW);
+    delayMicroseconds(2);
+    digitalWrite(trigPin1, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin1, LOW);
 
-  duration = pulseIn(echoPin1, HIGH, 30000);
-  if (duration == 0) return -1;
+    duration = pulseIn(echoPin1, HIGH, 30000);
+    if (duration == 0) return -1;
 
-  float d = (duration * 0.0343) / 2;
-  Serial.print("D1: ");
-  Serial.println(d);
-  return d;
+    float d = (duration * 0.0343) / 2;
+    Serial.print("D1: ");
+    Serial.println(d);
+    return d;
 }
 
 float sonarSearching2() {
@@ -70,12 +72,6 @@ void scanMode() {
 
     float d1 = sonarSearching1();
     float d2 = sonarSearching2();
-
-    if (d1 > 0 || d2 > 0) {
-      trackPos = pos;
-      state = TRACKING;
-      return;
-    }
   }
 
   for (pos = 50; pos >= 0; pos -= 10) {
@@ -86,11 +82,7 @@ void scanMode() {
     float d1 = sonarSearching1();
     float d2 = sonarSearching2();
 
-    if (d1 > 0 || d2 > 0) {
-      trackPos = pos;
-      state = TRACKING;
-      return;
-    }
+    
   }
 }
 
@@ -157,10 +149,21 @@ void trackingMode() {
 
 
 void loop() {
+
+  bool trackSwitch = digitalRead(trackSwitchPin);
+
+  // Switch High -> Track
+  if (trackSwitch == HIGH) {
+    state = TRACKING;
+  }
+
   switch (state) {
 
     case SCANNING:
-      scanMode();
+      // Switch off -> Searching
+      if (trackSwitch == LOW) {
+        scanMode();
+      }
       break;
 
     case TRACKING:
@@ -168,13 +171,18 @@ void loop() {
       break;
 
     case LOST:
-      state = SCANNING;
+      // If switch High -> Keep Track
+      if (trackSwitch == HIGH) {
+        state = TRACKING;
+      } else {
+        state = SCANNING;
+      }
       break;
   }
 }
 
 float getTargetAngle(float d1, float d2) {
-  const float sensorGap = 8.0; // cm
+  const float sensorGap = 15.0; // cm
 
   float diff = d1 - d2;
   float theta = atan(diff / sensorGap); // radian
