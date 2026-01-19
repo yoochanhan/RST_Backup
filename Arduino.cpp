@@ -174,7 +174,7 @@ void loop() {
 }
 
 float getTargetAngle(float d1, float d2) {
-  const float sensorGap = 15.0; // cm
+  const float sensorGap = 8.0; // cm
 
   float diff = d1 - d2;
   float theta = atan(diff / sensorGap); // radian
