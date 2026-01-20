@@ -8,45 +8,54 @@ RadarState state = SCANNING;
 const int DETECT_DISTANCE = 350; // Distance 350cm
 const int MAX_ERROR = 15;        // Error 15 cm
 
-int trackPos = 0;
-Servo myservo1;
-Servo myservo2; // create servo object to control a servo
-int pos = 0;    // variable to store the servo position
-const int trigPin1 = 3;  
-const int echoPin1 = 2; 
-const int trigPin2 = 13;  
-const int echoPin2 = 12; 
+int trackPosR = 0;   // Right servo
+int trackPosL = 0;   // Left servo
+
+Servo myservo1; // R
+Servo myservo2; // L
+
+int pos = 0;
+
+const int trigPin1 = 3;
+const int echoPin1 = 2;
+const int trigPin2 = 13;
+const int echoPin2 = 12;
 const int trackSwitchPin = 6;
-float duration, distance;
+
+float duration;
 const int maxfilyDistance = 50;
 
 void setup()
 {
-    myservo1.attach(9);
-  	myservo2.attach(8); // attaches the servo on pin 9 and 8 to the servo object
-    myservo1.write(0);
-	myservo2.write(0);
-    pinMode(trigPin1, OUTPUT);   
-    pinMode(trigPin2, OUTPUT);
-  	pinMode(echoPin1, INPUT); 
-	pinMode(echoPin2, INPUT);  
-    pinMode(trackSwitchPin, INPUT);
-	Serial.begin(9600);  
+  myservo1.attach(9);   // R
+  myservo2.attach(8);   // L
+
+  myservo1.write(0);
+  myservo2.write(0);
+
+  pinMode(trigPin1, OUTPUT);
+  pinMode(trigPin2, OUTPUT);
+  pinMode(echoPin1, INPUT);
+  pinMode(echoPin2, INPUT);
+  pinMode(trackSwitchPin, INPUT);
+
+  Serial.begin(9600);
 }
+
 float sonarSearching1() {
-    digitalWrite(trigPin1, LOW);
-    delayMicroseconds(2);
-    digitalWrite(trigPin1, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(trigPin1, LOW);
+  digitalWrite(trigPin1, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin1, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin1, LOW);
 
-    duration = pulseIn(echoPin1, HIGH, 30000);
-    if (duration == 0) return -1;
+  duration = pulseIn(echoPin1, HIGH, 30000);
+  if (duration == 0) return -1;
 
-    float d = (duration * 0.0343) / 2;
-    Serial.print("D1: ");
-    Serial.println(d);
-    return d;
+  float d = (duration * 0.0343) / 2;
+  Serial.print("D1: ");
+  Serial.println(d);
+  return d;
 }
 
 float sonarSearching2() {
@@ -64,25 +73,22 @@ float sonarSearching2() {
   Serial.println(d);
   return d;
 }
+
 void scanMode() {
   for (pos = 0; pos <= 50; pos += 10) {
     myservo1.write(pos);
     myservo2.write(pos);
     delay(60);
-
-    float d1 = sonarSearching1();
-    float d2 = sonarSearching2();
+    sonarSearching1();
+    sonarSearching2();
   }
 
   for (pos = 50; pos >= 0; pos -= 10) {
     myservo1.write(pos);
     myservo2.write(pos);
     delay(60);
-
-    float d1 = sonarSearching1();
-    float d2 = sonarSearching2();
-
-    
+    sonarSearching1();
+    sonarSearching2();
   }
 }
 
@@ -90,29 +96,39 @@ void trackingMode() {
   static float prevAvgDist = -1;
   static unsigned long prevTime = 0;
 
-  float d1 = sonarSearching1();
-  float d2 = sonarSearching2();
+  float d1 = sonarSearching1(); // R
+  float d2 = sonarSearching2(); // L
 
-  // Tratget lost
+  // Target lost
   if (d1 < 0 && d2 < 0) {
     state = LOST;
     return;
   }
 
-  // Error occured(make it execption)
+  // Error too large > LOST
   if (d1 > 0 && d2 > 0 && abs(d1 - d2) > MAX_ERROR) {
     state = LOST;
     return;
   }
 
-  // Calibrate angle
+  // -- BOTH DETECTED
   if (d1 > 0 && d2 > 0) {
+
     float angle = getTargetAngle(d1, d2);
+    int deltaR = trackPosL * 0.5;  // sensitivity
+    int deltaL = trackPosR * 0.5;  // sensitivity
 
-    // Angle --> servo
-    trackPos += angle * 0.5; // censitive (0.3~0.7)
+    // calibrate base on closer target
+    if (d1 < d2) {
+      // Right is closer → trust R
+      trackPosL += deltaR;   // L move
+    }
+    else if (d2 < d1) {
+      // Left is closer → trust L
+      trackPosR += deltaL;   // R move
+    }
 
-    // calculate speed (optional idk)
+    // speed calculation 
     float avgDist = (d1 + d2) / 2.0;
     unsigned long now = millis();
 
@@ -129,38 +145,39 @@ void trackingMode() {
     prevAvgDist = avgDist;
     prevTime = now;
   }
-  // when sonar 2 lost target
+
+  // === ONE SENSOR ONLY ===
   else if (d1 > 0) {
-    trackPos -= 2; // left
+    // Right only
+    trackPosL -= 2;
+    trackPosR -= 2;
   }
-  // when sonar 1 lost target
   else if (d2 > 0) {
-    trackPos += 2; // right
+    // Left only
+    trackPosR += 2;
+    trackPosL += 2;
   }
 
-  // servo limit
-  trackPos = constrain(trackPos, 0, 50);
+  // limit
+  trackPosR = constrain(trackPosR, 0, 50);
+  trackPosL = constrain(trackPosL, 0, 50);
 
-  myservo1.write(trackPos);
-  myservo2.write(trackPos);
+  myservo1.write(trackPosR); // R
+  myservo2.write(trackPosL); // L
 
   delay(50);
 }
 
 
 void loop() {
-
   bool trackSwitch = digitalRead(trackSwitchPin);
 
-  // Switch High -> Track
   if (trackSwitch == HIGH) {
     state = TRACKING;
   }
 
   switch (state) {
-
     case SCANNING:
-      // Switch off -> Searching
       if (trackSwitch == LOW) {
         scanMode();
       }
@@ -171,7 +188,6 @@ void loop() {
       break;
 
     case LOST:
-      // If switch High -> Keep Track
       if (trackSwitch == HIGH) {
         state = TRACKING;
       } else {
@@ -182,20 +198,15 @@ void loop() {
 }
 
 float getTargetAngle(float d1, float d2) {
-  const float sensorGap = 15.0; // cm
-
+  const float sensorGap = 15.0;
   float diff = d1 - d2;
-  float theta = atan(diff / sensorGap); // radian
-
-  return theta * 180.0 / PI; // degree
+  float theta = atan(diff / sensorGap);
+  return theta * 180.0 / PI;
 }
 
 float getTargetSpeed(float prevDist, float currDist, float deltaTime, float angleDeg) {
   float angleRad = angleDeg * PI / 180.0;
-
-  float deltaD = prevDist - currDist; // when approching -> speed +
-  float speed = deltaD / deltaTime;   // cm/s
-
-  // Horizontal speed calculate
+  float deltaD = prevDist - currDist;
+  float speed = deltaD / deltaTime;
   return speed * cos(angleRad);
 }
